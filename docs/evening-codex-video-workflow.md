@@ -48,7 +48,7 @@ cd /Volumes/T7/project/project_fmzh/2026/video_publish_pipeline
 npm run evening:preflight
 ```
 
-预检会在独立 LaunchAgent 中验证 Codex 登录和最小调用、Home 运行副本、GitHub workflow 状态、公网 callback、头条登录态目录、资源目录写权限和系统盘空间。
+预检会在独立 LaunchAgent 中验证 Codex 登录和最小调用、Home 运行副本、GitHub workflow 状态、无实际运行产生的 dispatch 权限、公网 callback、头条登录态目录、资源目录写权限和系统盘空间。
 
 完整链路：
 

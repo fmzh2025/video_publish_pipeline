@@ -32,7 +32,12 @@ test("preflight validates the Home runtime, GitHub, callback, and auto_publish",
   fs.mkdirSync(path.join(config.autoPublishDir, "resources"), { recursive: true });
   fs.mkdirSync(config.workdir, { recursive: true });
 
-  const fetchImpl = async (url) => {
+  const fetchImpl = async (url, options = {}) => {
+    if (String(url).endsWith("/dispatches") && options.method === "POST") {
+      return new Response(JSON.stringify({ message: "No ref found for: missing" }), {
+        status: 422
+      });
+    }
     if (String(url).startsWith("https://api.github.com/")) {
       return new Response(
         JSON.stringify({
@@ -63,6 +68,7 @@ test("preflight validates the Home runtime, GitHub, callback, and auto_publish",
     [
       ["runtime_app", true],
       ["github_workflow", true],
+      ["github_dispatch_permission", true],
       ["public_callback", true],
       ["auto_publish", true],
       ["system_disk", true]

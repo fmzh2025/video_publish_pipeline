@@ -54,6 +54,33 @@ export async function runEveningPreflight({
     };
   });
 
+  await check("github_dispatch_permission", async () => {
+    if (!config.githubToken) throw new Error("GITHUB_TOKEN is missing");
+    const url = `https://api.github.com/repos/${config.githubOwner}/${config.githubRepo}/actions/workflows/${encodeURIComponent(config.githubWorkflow)}/dispatches`;
+    const missingRef = `refs/heads/video-pipeline-preflight-missing-${Date.now()}`;
+    const response = await fetchImpl(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.githubToken}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Content-Type": "application/json",
+        "User-Agent": "video-publish-pipeline-preflight"
+      },
+      body: JSON.stringify({
+        ref: missingRef,
+        inputs: { video_subject: "权限预检" }
+      })
+    });
+    const body = await response.text().catch(() => "");
+    if (response.status !== 422 || !body.includes("No ref found")) {
+      throw new Error(
+        `GitHub dispatch permission check expected 422 No ref found, got ${response.status} ${body}`.trim()
+      );
+    }
+    return { status: response.status, result: "authorized_without_dispatch" };
+  });
+
   await check("public_callback", async () => {
     if (!config.callbackUrl) throw new Error("MPT_CALLBACK_URL is missing");
     if (!config.callbackToken) throw new Error("MPT_CALLBACK_TOKEN is missing");
