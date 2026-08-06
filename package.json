@@ -1,0 +1,16 @@
+{
+  "name": "video-publish-pipeline",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "callback": "node src/cli/callback-server.mjs",
+    "dispatch:action": "scripts/dispatch-generate-video.sh",
+    "dispatch": "node src/cli/dispatch-workflow.mjs",
+    "process-event": "node src/cli/process-event.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
