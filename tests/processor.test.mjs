@@ -47,6 +47,13 @@ test("processor downloads artifact, extracts final-1.mp4, prepares resource, and
   assert.equal(result.status, "published");
   assert.equal(result.toutiao_status, "submitted");
   assert.equal(result.toutiao_page_url, "https://example.com/video");
+  assert.equal(result.runtime_cleanup_status, "completed");
+  assert.equal(result.runtime_cleaned, true);
+  assert.equal(fs.existsSync(path.join(config.workdir, "req-test-001")), false);
+  assert.equal(
+    fs.existsSync(path.join(result.auto_publish_resource_dir, "video.mp4")),
+    true
+  );
   assert.ok(fs.existsSync(path.join(config.workdir, "req-test-001.status.json")));
 });
 
@@ -124,6 +131,7 @@ test("processor records publish failures", async () => {
   assert.equal(result.toutiao_status, "failed");
   assert.equal(result.auto_publish_stdout, "stdout");
   assert.equal(result.auto_publish_stderr, "stderr");
+  assert.equal(fs.existsSync(path.join(config.workdir, "req-test-001")), true);
 });
 
 test("processor does not mark unverified Toutiao submissions as published", async () => {
@@ -160,4 +168,6 @@ test("processor does not mark unverified Toutiao submissions as published", asyn
 
   assert.equal(result.status, "publish_unverified");
   assert.equal(result.toutiao_status, "submitted_unverified");
+  assert.equal(result.runtime_cleaned, undefined);
+  assert.equal(fs.existsSync(path.join(config.workdir, "req-test-001")), true);
 });

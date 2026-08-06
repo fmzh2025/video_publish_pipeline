@@ -156,7 +156,7 @@ export async function handleWorkflowCompletedEvent(rawEvent, options = {}) {
         ? "publish_unverified"
         : "failed";
 
-  return stateStore.update(event.request_id, {
+  const finalState = await stateStore.update(event.request_id, {
     status,
     toutiao_status: parsed.status || "",
     toutiao_archive_dir: parsed.archiveDir || "",
@@ -165,4 +165,22 @@ export async function handleWorkflowCompletedEvent(rawEvent, options = {}) {
     auto_publish_stdout: publishResult.stdout || "",
     auto_publish_stderr: publishResult.stderr || ""
   });
+
+  if (status !== "published") return finalState;
+
+  try {
+    fs.rmSync(requestDir, { recursive: true, force: true });
+    return stateStore.update(event.request_id, {
+      runtime_cleanup_status: "completed",
+      runtime_cleanup_path: requestDir,
+      runtime_cleaned: true
+    });
+  } catch (error) {
+    return stateStore.update(event.request_id, {
+      runtime_cleanup_status: "failed",
+      runtime_cleanup_path: requestDir,
+      runtime_cleaned: false,
+      runtime_cleanup_error: error.message
+    });
+  }
 }
