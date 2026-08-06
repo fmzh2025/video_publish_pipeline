@@ -1,24 +1,46 @@
 import crypto from "node:crypto";
 
+const MAX_WORKFLOW_DISPATCH_INPUTS = 10;
+
 export function buildWorkflowDispatchInputs(input = {}) {
   const requestId = input.request_id || crypto.randomUUID();
-  return {
+  const inputs = {
     request_id: requestId,
-    video_subject: input.video_subject || "",
-    video_script: input.video_script || "",
-    llm_provider: input.llm_provider || "moonshot",
-    video_source: input.video_source || "pexels",
-    video_materials: input.video_materials || "",
-    video_terms: input.video_terms || "",
-    video_language: input.video_language || "zh-CN",
-    video_aspect: input.video_aspect || "9:16",
-    video_count: String(input.video_count || "1"),
-    voice_name: input.voice_name || "zh-CN-XiaoxiaoNeural-Female",
-    bgm_type: input.bgm_type || "random",
-    subtitle_enabled:
-      typeof input.subtitle_enabled === "boolean" ? input.subtitle_enabled : true,
-    stop_at: input.stop_at || "video"
+    video_subject: input.video_subject || ""
   };
+
+  setStringInput(inputs, "video_script", input.video_script);
+  setStringInput(inputs, "video_terms", normalizeVideoTerms(input.video_terms));
+  setStringInputIfChanged(inputs, "llm_provider", input.llm_provider, "moonshot");
+  setStringInputIfChanged(inputs, "video_source", input.video_source, "pexels");
+  setStringInput(inputs, "video_materials", input.video_materials);
+  setStringInput(inputs, "video_language", input.video_language);
+  setStringInputIfChanged(inputs, "video_aspect", input.video_aspect, "9:16");
+  setStringInputIfChanged(inputs, "video_count", String(input.video_count || ""), "1");
+  setStringInputIfChanged(
+    inputs,
+    "voice_name",
+    input.voice_name,
+    "zh-CN-XiaoxiaoNeural-Female"
+  );
+  setStringInputIfChanged(inputs, "bgm_type", input.bgm_type, "random");
+  setBooleanInputIfChanged(inputs, "subtitle_enabled", input.subtitle_enabled, true);
+  setStringInputIfChanged(inputs, "stop_at", input.stop_at, "video");
+  setBooleanInputIfChanged(
+    inputs,
+    "match_materials_to_script",
+    input.match_materials_to_script,
+    false
+  );
+
+  const inputCount = Object.keys(inputs).length;
+  if (inputCount > MAX_WORKFLOW_DISPATCH_INPUTS) {
+    throw new Error(
+      `workflow_dispatch inputs exceed GitHub limit: ${inputCount}/${MAX_WORKFLOW_DISPATCH_INPUTS}`
+    );
+  }
+
+  return inputs;
 }
 
 export async function dispatchWorkflow({
@@ -70,4 +92,26 @@ export async function dispatchWorkflow({
     ref,
     inputs: dispatchInputs
   };
+}
+
+function normalizeVideoTerms(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || "").trim()).filter(Boolean).join(",");
+  }
+  return value || "";
+}
+
+function setStringInput(inputs, key, value) {
+  const normalized = String(value || "").trim();
+  if (normalized) inputs[key] = normalized;
+}
+
+function setStringInputIfChanged(inputs, key, value, defaultValue) {
+  const normalized = String(value || "").trim();
+  if (normalized && normalized !== defaultValue) inputs[key] = normalized;
+}
+
+function setBooleanInputIfChanged(inputs, key, value, defaultValue) {
+  if (typeof value !== "boolean") return;
+  if (value !== defaultValue) inputs[key] = value;
 }

@@ -17,8 +17,26 @@ test("builds dispatch inputs with request_id and defaults", () => {
   });
   assert.equal(inputs.request_id, "req-1");
   assert.equal(inputs.video_subject, "主题");
-  assert.equal(inputs.llm_provider, "moonshot");
-  assert.equal(inputs.subtitle_enabled, true);
+  assert.equal(inputs.llm_provider, undefined);
+  assert.equal(inputs.subtitle_enabled, undefined);
+  assert.equal(Object.keys(inputs).length, 2);
+});
+
+test("builds compact dispatch inputs for Codex generated script and terms", () => {
+  const inputs = buildWorkflowDispatchInputs({
+    request_id: "req-1",
+    video_subject: "主题",
+    video_script: "完整脚本",
+    video_terms: ["summer park shade", "people drinking iced tea"],
+    match_materials_to_script: true
+  });
+  assert.deepEqual(inputs, {
+    request_id: "req-1",
+    video_subject: "主题",
+    video_script: "完整脚本",
+    video_terms: "summer park shade,people drinking iced tea",
+    match_materials_to_script: true
+  });
 });
 
 test("dispatches GitHub workflow", async () => {
