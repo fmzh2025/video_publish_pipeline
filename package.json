@@ -8,7 +8,8 @@
     "callback": "node src/cli/callback-server.mjs",
     "dispatch:action": "scripts/dispatch-generate-video.sh",
     "dispatch": "node src/cli/dispatch-workflow.mjs",
-    "process-event": "node src/cli/process-event.mjs"
+    "process-event": "node src/cli/process-event.mjs",
+    "evening:video": "scripts/run-codex-evening-video-workflow.sh"
   },
   "engines": {
     "node": ">=22"
