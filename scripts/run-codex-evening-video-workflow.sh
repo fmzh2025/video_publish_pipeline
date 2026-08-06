@@ -3,7 +3,12 @@ set -euo pipefail
 
 export PATH="/Users/fumingzhen/.nvm/versions/node/v22.22.0/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
-PIPELINE_DIR="/Volumes/T7/project/project_fmzh/2026/video_publish_pipeline"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_PIPELINE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [[ -f "$DEFAULT_PIPELINE_DIR/app/package.json" ]]; then
+  DEFAULT_PIPELINE_DIR="$DEFAULT_PIPELINE_DIR/app"
+fi
+PIPELINE_DIR="${PIPELINE_ROOT:-$DEFAULT_PIPELINE_DIR}"
 
 load_env_file() {
   local env_file="$1"
@@ -31,7 +36,7 @@ RUN_DIR="$WORKDIR_ROOT/codex-evening/$REQUEST_ID"
 OUTPUT_JSON="$RUN_DIR/dispatch-input.json"
 SUBJECT_FILE="$RUN_DIR/subject.txt"
 
-mkdir -p "$LOG_DIR" "$LOCK_ROOT" "$RUN_DIR"
+mkdir -p "$LOG_DIR" "$LOCK_ROOT" "$WORKDIR_ROOT/codex-evening"
 
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
   echo "$(date '+%Y-%m-%d %H:%M:%S %Z') another evening video run is active, skip" >> "$LOG_DIR/evening-video-workflow.log"
@@ -47,6 +52,28 @@ if [[ -z "${GITHUB_TOKEN:-}" ]]; then
   echo "GITHUB_TOKEN is required. Put it in $LOCAL_ENV_FILE or export it in the LaunchAgent environment." >&2
   exit 2
 fi
+
+if [[ "${EVENING_VIDEO_PREFLIGHT_ONLY:-false}" == "true" ]]; then
+  {
+    echo "===== $(date '+%Y-%m-%d %H:%M:%S %Z') evening video preflight start ====="
+    [[ -x "$CODEX_BIN" ]] || { echo "Codex executable is unavailable: $CODEX_BIN" >&2; exit 1; }
+    [[ -r "$PROMPT_FILE" ]] || { echo "Prompt file is unavailable: $PROMPT_FILE" >&2; exit 1; }
+    "$CODEX_BIN" login status
+    if [[ "${EVENING_VIDEO_PREFLIGHT_CODEX:-false}" == "true" ]]; then
+      "$CODEX_BIN" exec \
+        --cd "$CODEX_WORKDIR" \
+        --dangerously-bypass-approvals-and-sandbox \
+        --ephemeral \
+        "只输出 READY，不调用工具。" | grep -q "READY"
+    fi
+    cd "$PIPELINE_DIR"
+    npm run preflight
+    echo "===== $(date '+%Y-%m-%d %H:%M:%S %Z') evening video preflight passed ====="
+  } >> "$LOG_DIR/evening-video-preflight.log" 2>&1
+  exit 0
+fi
+
+mkdir -p "$RUN_DIR"
 
 export EVENING_VIDEO_REQUEST_ID="$REQUEST_ID"
 export EVENING_VIDEO_OUTPUT_JSON="$OUTPUT_JSON"

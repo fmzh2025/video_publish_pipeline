@@ -19,6 +19,7 @@ export function loadConfig(env = process.env) {
     callbackPort: Number(env.MPT_CALLBACK_PORT || 32199),
     callbackPath: env.MPT_CALLBACK_PATH || "/api/mpt/video/workflow-callback",
     callbackToken: env.MPT_CALLBACK_TOKEN || "",
+    callbackUrl: env.MPT_CALLBACK_URL || "",
 
     upstashRedisUrl: env.UPSTASH_REDIS_URL || "",
     upstashRedisToken: env.UPSTASH_REDIS_TOKEN || "",

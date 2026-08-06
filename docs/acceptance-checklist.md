@@ -62,6 +62,9 @@
 
 ## 7. 端到端验收
 
+- [ ] callback 和 18:30 LaunchAgent 的 `PIPELINE_ROOT` 指向 Home 下的 `video_publish_pipeline/app`。
+- [ ] 已执行 `npm run evening:preflight`，LaunchAgent 预检返回成功。
+- [ ] 强制重启 callback 后，进程工作目录仍为 Home 运行副本。
 - [ ] 外部 API 触发 GitHub Actions。
 - [ ] GitHub Actions 生成视频成功。
 - [ ] 当前服务器收到完成事件。
@@ -69,6 +72,7 @@
 - [ ] 当前服务器提取 `final-1.mp4`。
 - [ ] 当前服务器调用 `auto_publish --publish`。
 - [ ] 头条发布脚本返回完成状态。
+- [ ] 发布成功后 artifact zip 和解压目录被清理，`auto_publish/resources` 保留。
 
 ## 8. 本期可接受但需记录的问题
 

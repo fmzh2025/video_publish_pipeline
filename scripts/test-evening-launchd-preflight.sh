@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SOURCE_PIPELINE_DIR="/Volumes/T7/project/project_fmzh/2026/video_publish_pipeline"
-LABEL="com.codex.toutiao-autopublish.1830"
+LABEL="com.codex.toutiao-autopublish.preflight"
 PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
-LOG_DIR="$HOME/Library/Logs/video_publish_pipeline"
 SUPPORT_DIR="$HOME/Library/Application Support/video_publish_pipeline"
 APP_DIR="$SUPPORT_DIR/app"
 RUNNER_DIR="$SUPPORT_DIR/evening-video"
@@ -12,22 +10,27 @@ RUNNER="$RUNNER_DIR/run-codex-evening-video-workflow.sh"
 RUNNER_ENV="$RUNNER_DIR/local.env"
 RUNNER_PROMPT="$RUNNER_DIR/evening-video-codex.md"
 RUNTIME_DIR="$RUNNER_DIR/runtime"
+LOG_DIR="$HOME/Library/Logs/video_publish_pipeline"
+OUT_LOG="$LOG_DIR/${LABEL}.out.log"
+ERR_LOG="$LOG_DIR/${LABEL}.err.log"
 PATH_VALUE="/Users/fumingzhen/.nvm/versions/node/v22.22.0/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
-mkdir -p "$HOME/Library/LaunchAgents" "$LOG_DIR" "$RUNNER_DIR" "$RUNTIME_DIR/workdir" "$RUNTIME_DIR/.locks"
+for required in "$APP_DIR/package.json" "$RUNNER" "$RUNNER_ENV" "$RUNNER_PROMPT"; do
+  if [[ ! -e "$required" ]]; then
+    echo "Missing installed runtime file: $required" >&2
+    exit 1
+  fi
+done
 
-if [[ ! -f "$SOURCE_PIPELINE_DIR/config/local.env" ]]; then
-  echo "Missing local environment file: $SOURCE_PIPELINE_DIR/config/local.env" >&2
-  exit 1
-fi
+cleanup() {
+  launchctl bootout "gui/$(id -u)" "$PLIST" >/dev/null 2>&1 || true
+  rm -f "$PLIST"
+}
+trap cleanup EXIT
 
-"$SOURCE_PIPELINE_DIR/scripts/deploy-home-runtime.sh" "$SOURCE_PIPELINE_DIR" "$APP_DIR"
-cp "$SOURCE_PIPELINE_DIR/scripts/run-codex-evening-video-workflow.sh" "$RUNNER"
-cp "$SOURCE_PIPELINE_DIR/config/local.env" "$RUNNER_ENV"
-cp "$SOURCE_PIPELINE_DIR/automation/prompts/evening-video-codex.md" "$RUNNER_PROMPT"
-chmod 755 "$RUNNER"
-chmod 600 "$RUNNER_ENV"
-chmod 644 "$RUNNER_PROMPT"
+mkdir -p "$HOME/Library/LaunchAgents" "$LOG_DIR"
+: > "$OUT_LOG"
+: > "$ERR_LOG"
 
 cat > "$PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -43,13 +46,8 @@ cat > "$PLIST" <<PLIST
   </array>
   <key>WorkingDirectory</key>
   <string>${RUNNER_DIR}</string>
-  <key>StartCalendarInterval</key>
-  <dict>
-    <key>Hour</key>
-    <integer>18</integer>
-    <key>Minute</key>
-    <integer>30</integer>
-  </dict>
+  <key>RunAtLoad</key>
+  <true/>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key>
@@ -68,11 +66,15 @@ cat > "$PLIST" <<PLIST
     <string>${RUNNER_PROMPT}</string>
     <key>EVENING_VIDEO_CODEX_WORKDIR</key>
     <string>${RUNNER_DIR}</string>
+    <key>EVENING_VIDEO_PREFLIGHT_ONLY</key>
+    <string>true</string>
+    <key>EVENING_VIDEO_PREFLIGHT_CODEX</key>
+    <string>true</string>
   </dict>
   <key>StandardOutPath</key>
-  <string>${LOG_DIR}/${LABEL}.out.log</string>
+  <string>${OUT_LOG}</string>
   <key>StandardErrorPath</key>
-  <string>${LOG_DIR}/${LABEL}.err.log</string>
+  <string>${ERR_LOG}</string>
 </dict>
 </plist>
 PLIST
@@ -80,4 +82,25 @@ PLIST
 chmod 644 "$PLIST"
 launchctl bootout "gui/$(id -u)" "$PLIST" >/dev/null 2>&1 || true
 launchctl bootstrap "gui/$(id -u)" "$PLIST"
-launchctl print "gui/$(id -u)/${LABEL}"
+
+for _ in $(seq 1 120); do
+  job_state="$(launchctl print "gui/$(id -u)/${LABEL}" 2>/dev/null || true)"
+  if grep -q "runs = 1" <<<"$job_state" && grep -q "state = not running" <<<"$job_state"; then
+    if grep -q "last exit code = 0" <<<"$job_state"; then
+      cat "$OUT_LOG"
+      cat "$ERR_LOG" >&2
+      echo "LaunchAgent evening preflight passed"
+      exit 0
+    fi
+    cat "$OUT_LOG"
+    cat "$ERR_LOG" >&2
+    echo "LaunchAgent evening preflight failed" >&2
+    exit 1
+  fi
+  sleep 1
+done
+
+cat "$OUT_LOG"
+cat "$ERR_LOG" >&2
+echo "LaunchAgent evening preflight timed out" >&2
+exit 1

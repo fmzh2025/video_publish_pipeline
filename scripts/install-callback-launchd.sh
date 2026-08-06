@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PIPELINE_DIR="/Volumes/T7/project/project_fmzh/2026/video_publish_pipeline"
+SOURCE_PIPELINE_DIR="/Volumes/T7/project/project_fmzh/2026/video_publish_pipeline"
 LABEL="com.codex.video-publish-callback"
 PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
 LOG_DIR="$HOME/Library/Logs/video_publish_pipeline"
 RUNNER_DIR="$HOME/Library/Application Support/video_publish_pipeline"
+APP_DIR="$RUNNER_DIR/app"
 RUNNER="$RUNNER_DIR/run-callback-service.sh"
 RUNNER_ENV="$RUNNER_DIR/local.env"
 RUNTIME_DIR="$RUNNER_DIR/runtime"
 PATH_VALUE="/Users/fumingzhen/.nvm/versions/node/v22.22.0/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 mkdir -p "$HOME/Library/LaunchAgents" "$LOG_DIR" "$RUNNER_DIR" "$RUNTIME_DIR/workdir"
-if [[ -f "$PIPELINE_DIR/config/local.env" ]]; then
-  cp "$PIPELINE_DIR/config/local.env" "$RUNNER_ENV"
+"$SOURCE_PIPELINE_DIR/scripts/deploy-home-runtime.sh" "$SOURCE_PIPELINE_DIR" "$APP_DIR"
+if [[ -f "$SOURCE_PIPELINE_DIR/config/local.env" ]]; then
+  cp "$SOURCE_PIPELINE_DIR/config/local.env" "$RUNNER_ENV"
   chmod 600 "$RUNNER_ENV"
 fi
 
@@ -21,7 +23,7 @@ cat > "$RUNNER" <<RUNNER
 #!/usr/bin/env bash
 set -euo pipefail
 
-PIPELINE_DIR="${PIPELINE_DIR}"
+PIPELINE_DIR="${APP_DIR}"
 ENV_FILE="${RUNNER_ENV}"
 PATH_VALUE="${PATH_VALUE}"
 
@@ -88,7 +90,7 @@ cat > "$PLIST" <<PLIST
     <key>PATH</key>
     <string>${PATH_VALUE}</string>
     <key>PIPELINE_ROOT</key>
-    <string>${PIPELINE_DIR}</string>
+    <string>${APP_DIR}</string>
   </dict>
   <key>StandardOutPath</key>
   <string>${LOG_DIR}/${LABEL}.out.log</string>

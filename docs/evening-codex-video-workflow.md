@@ -22,19 +22,33 @@ npm run evening:install
 /Users/fumingzhen/Library/Application Support/video_publish_pipeline/evening-video/
 ```
 
-LaunchAgent 的运行时文件放在 Home 目录，源码和提示词仍从 T7 仓库读取：
+安装脚本会把 `src/` 和 `package.json` 部署到 Home。LaunchAgent 运行时不再读取 T7：
 
 ```text
+/Users/fumingzhen/Library/Application Support/video_publish_pipeline/app
 /Users/fumingzhen/Library/Application Support/video_publish_pipeline/evening-video/runtime/workdir
 /Users/fumingzhen/Library/Application Support/video_publish_pipeline/evening-video/runtime/.locks
 ```
+
+T7 仓库只在执行 `npm run callback:install` 或 `npm run evening:install` 时作为部署源使用。源码变更后需要重新执行安装命令刷新 Home 运行副本。
 
 LaunchAgent 日志位于：
 
 ```text
 /Users/fumingzhen/Library/Logs/video_publish_pipeline/com.codex.toutiao-autopublish.1830.out.log
 /Users/fumingzhen/Library/Logs/video_publish_pipeline/com.codex.toutiao-autopublish.1830.err.log
+/Users/fumingzhen/Library/Logs/video_publish_pipeline/evening-video-workflow.log
+/Users/fumingzhen/Library/Logs/video_publish_pipeline/evening-video-preflight.log
 ```
+
+执行不会 dispatch 或发布视频的 LaunchAgent 预检：
+
+```bash
+cd /Volumes/T7/project/project_fmzh/2026/video_publish_pipeline
+npm run evening:preflight
+```
+
+预检会在独立 LaunchAgent 中验证 Codex 登录和最小调用、Home 运行副本、GitHub workflow 状态、公网 callback、头条登录态目录、资源目录写权限和系统盘空间。
 
 完整链路：
 
@@ -176,7 +190,7 @@ Token 至少需要：
 晚间任务日志：
 
 ```text
-/Volumes/T7/project/project_fmzh/2026/video_publish_pipeline/logs/evening-video-workflow.log
+/Users/fumingzhen/Library/Logs/video_publish_pipeline/evening-video-workflow.log
 ```
 
 GitHub Action 回调后的本地处理状态：
@@ -184,3 +198,5 @@ GitHub Action 回调后的本地处理状态：
 ```text
 /Users/fumingzhen/Library/Application Support/video_publish_pipeline/runtime/workdir/<request_id>.status.json
 ```
+
+当头条明确返回 `submitted` 时，callback worker 会删除该请求的 artifact zip 和解压目录；状态 JSON、日志、`auto_publish/resources` 素材和发布归档继续保留。
