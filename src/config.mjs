@@ -16,7 +16,7 @@ export function loadConfig(env = process.env) {
 
     notifyChannel: env.MPT_NOTIFY_CHANNEL || "callback",
     callbackHost: env.MPT_CALLBACK_HOST || "0.0.0.0",
-    callbackPort: Number(env.MPT_CALLBACK_PORT || 8088),
+    callbackPort: Number(env.MPT_CALLBACK_PORT || 32199),
     callbackPath: env.MPT_CALLBACK_PATH || "/api/mpt/video/workflow-callback",
     callbackToken: env.MPT_CALLBACK_TOKEN || "",
 

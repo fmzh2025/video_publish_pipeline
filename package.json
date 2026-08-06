@@ -6,6 +6,8 @@
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "callback": "node src/cli/callback-server.mjs",
+    "callback:service": "scripts/run-callback-service.sh",
+    "callback:install": "scripts/install-callback-launchd.sh",
     "dispatch:action": "scripts/dispatch-generate-video.sh",
     "dispatch": "node src/cli/dispatch-workflow.mjs",
     "process-event": "node src/cli/process-event.mjs",

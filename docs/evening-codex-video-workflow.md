@@ -41,6 +41,50 @@ scripts/install-evening-video-launchd.sh
 7. 本地 callback worker 下载 artifact，解压 `final-1.mp4`。
 8. 本地 worker 调用 `auto_publish` 上传并发布到头条。
 
+## Callback 常驻服务
+
+当前本地 callback 服务监听：
+
+```text
+0.0.0.0:32199/api/mpt/video/workflow-callback
+```
+
+外网回调域名：
+
+```text
+https://callback.foxhello.cn/api/mpt/video/workflow-callback
+```
+
+MoneyPrinterTurbo 仓库的 GitHub Actions secrets 需要配置：
+
+```text
+MPT_CALLBACK_URL=https://callback.foxhello.cn/api/mpt/video/workflow-callback
+MPT_CALLBACK_TOKEN=<与本机 config/local.env 相同的 token>
+```
+
+如果使用 GitHub API 自动设置 secrets，PAT 需要具备仓库 Actions secrets 读写权限；普通 workflow dispatch/artifact 下载 token 不足以修改 secrets。
+
+安装或刷新 callback LaunchAgent：
+
+```bash
+cd /Volumes/T7/project/project_fmzh/2026/video_publish_pipeline
+npm run callback:install
+```
+
+LaunchAgent 配置：
+
+- Label: `com.codex.video-publish-callback`
+- RunAtLoad: 登录后自动启动
+- KeepAlive: 进程退出后自动拉起
+- stdout: `/Users/fumingzhen/Library/Logs/video_publish_pipeline/com.codex.video-publish-callback.out.log`
+- stderr: `/Users/fumingzhen/Library/Logs/video_publish_pipeline/com.codex.video-publish-callback.err.log`
+
+手动查看监听：
+
+```bash
+lsof -nP -iTCP:32199 -sTCP:LISTEN
+```
+
 ## 为什么不再消耗 Kimi 生成文本
 
 MoneyPrinterTurbo 中的 `llm_provider=moonshot` 主要用于两件事：
@@ -71,6 +115,10 @@ MoneyPrinterTurbo 会把素材搜索词按脚本叙事顺序下载和拼接，�
 ```bash
 cat > /Volumes/T7/project/project_fmzh/2026/video_publish_pipeline/config/local.env <<'EOF'
 GITHUB_TOKEN=你的 GitHub PAT
+MPT_CALLBACK_HOST=0.0.0.0
+MPT_CALLBACK_PORT=32199
+MPT_CALLBACK_PATH=/api/mpt/video/workflow-callback
+MPT_CALLBACK_TOKEN=你的回调鉴权 token
 EOF
 ```
 
