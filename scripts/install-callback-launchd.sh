@@ -8,9 +8,10 @@ LOG_DIR="$HOME/Library/Logs/video_publish_pipeline"
 RUNNER_DIR="$HOME/Library/Application Support/video_publish_pipeline"
 RUNNER="$RUNNER_DIR/run-callback-service.sh"
 RUNNER_ENV="$RUNNER_DIR/local.env"
+RUNTIME_DIR="$RUNNER_DIR/runtime"
 PATH_VALUE="/Users/fumingzhen/.nvm/versions/node/v22.22.0/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
-mkdir -p "$HOME/Library/LaunchAgents" "$LOG_DIR" "$RUNNER_DIR" "$PIPELINE_DIR/logs"
+mkdir -p "$HOME/Library/LaunchAgents" "$LOG_DIR" "$RUNNER_DIR" "$RUNTIME_DIR/workdir"
 if [[ -f "$PIPELINE_DIR/config/local.env" ]]; then
   cp "$PIPELINE_DIR/config/local.env" "$RUNNER_ENV"
   chmod 600 "$RUNNER_ENV"
@@ -29,6 +30,8 @@ export PIPELINE_ROOT="\${PIPELINE_ROOT:-\$PIPELINE_DIR}"
 export MPT_CALLBACK_HOST="\${MPT_CALLBACK_HOST:-0.0.0.0}"
 export MPT_CALLBACK_PORT="\${MPT_CALLBACK_PORT:-32199}"
 export MPT_CALLBACK_PATH="\${MPT_CALLBACK_PATH:-/api/mpt/video/workflow-callback}"
+export WORKDIR="\${WORKDIR:-${RUNTIME_DIR}/workdir}"
+export LOGS_DIR="\${LOGS_DIR:-${LOG_DIR}}"
 
 if [[ -f "\$ENV_FILE" ]]; then
   set -a
@@ -40,6 +43,8 @@ export PIPELINE_ROOT="\${PIPELINE_ROOT:-\$PIPELINE_DIR}"
 export MPT_CALLBACK_HOST="\${MPT_CALLBACK_HOST:-0.0.0.0}"
 export MPT_CALLBACK_PORT="\${MPT_CALLBACK_PORT:-32199}"
 export MPT_CALLBACK_PATH="\${MPT_CALLBACK_PATH:-/api/mpt/video/workflow-callback}"
+export WORKDIR="\${WORKDIR:-${RUNTIME_DIR}/workdir}"
+export LOGS_DIR="\${LOGS_DIR:-${LOG_DIR}}"
 
 if [[ -z "\${MPT_CALLBACK_TOKEN:-}" ]]; then
   echo "MPT_CALLBACK_TOKEN is required. Put it in \$ENV_FILE." >&2
@@ -51,7 +56,7 @@ if [[ -z "\${GITHUB_TOKEN:-}" ]]; then
   exit 1
 fi
 
-mkdir -p "\$PIPELINE_DIR/logs" "\$PIPELINE_DIR/workdir"
+mkdir -p "\$LOGS_DIR" "\$WORKDIR"
 cd "\$PIPELINE_DIR"
 
 exec npm run callback

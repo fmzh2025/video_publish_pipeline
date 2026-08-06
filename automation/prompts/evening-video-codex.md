@@ -1,6 +1,6 @@
 你正在执行 18:30 头条视频自动发布任务的内容生成阶段。
 
-工作目录固定为 `/Volumes/T7/project/project_fmzh/2026/video_publish_pipeline`。
+本次执行目录由调度脚本提供；必须使用环境变量指定的输出路径，不要假设输出文件位于项目源码目录。
 
 目标：生成一条适合 MoneyPrinterTurbo 生成竖版视频、并适合头条发布的中文短视频内容。你只负责生成调度输入 JSON，不要调用 GitHub API，不要发布头条。
 

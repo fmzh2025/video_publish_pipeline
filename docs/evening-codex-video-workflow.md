@@ -13,7 +13,27 @@ npm run evening:video
 
 ```bash
 cd /Volumes/T7/project/project_fmzh/2026/video_publish_pipeline
-scripts/install-evening-video-launchd.sh
+npm run evening:install
+```
+
+为避免 macOS LaunchAgent 直接执行外置盘脚本时被 System Policy 拦截，安装过程会复制本机 runner 和 env 到：
+
+```text
+/Users/fumingzhen/Library/Application Support/video_publish_pipeline/evening-video/
+```
+
+LaunchAgent 的运行时文件放在 Home 目录，源码和提示词仍从 T7 仓库读取：
+
+```text
+/Users/fumingzhen/Library/Application Support/video_publish_pipeline/evening-video/runtime/workdir
+/Users/fumingzhen/Library/Application Support/video_publish_pipeline/evening-video/runtime/.locks
+```
+
+LaunchAgent 日志位于：
+
+```text
+/Users/fumingzhen/Library/Logs/video_publish_pipeline/com.codex.toutiao-autopublish.1830.out.log
+/Users/fumingzhen/Library/Logs/video_publish_pipeline/com.codex.toutiao-autopublish.1830.err.log
 ```
 
 完整链路：
@@ -162,5 +182,5 @@ Token 至少需要：
 GitHub Action 回调后的本地处理状态：
 
 ```text
-/Volumes/T7/project/project_fmzh/2026/video_publish_pipeline/workdir/<request_id>.status.json
+/Users/fumingzhen/Library/Application Support/video_publish_pipeline/runtime/workdir/<request_id>.status.json
 ```

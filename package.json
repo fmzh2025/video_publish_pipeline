@@ -11,7 +11,8 @@
     "dispatch:action": "scripts/dispatch-generate-video.sh",
     "dispatch": "node src/cli/dispatch-workflow.mjs",
     "process-event": "node src/cli/process-event.mjs",
-    "evening:video": "scripts/run-codex-evening-video-workflow.sh"
+    "evening:video": "scripts/run-codex-evening-video-workflow.sh",
+    "evening:install": "scripts/install-evening-video-launchd.sh"
   },
   "engines": {
     "node": ">=22"
