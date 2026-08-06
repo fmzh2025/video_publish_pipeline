@@ -9,11 +9,13 @@
 - `EVENING_VIDEO_REQUEST_ID`：本次请求 ID。
 - `EVENING_VIDEO_OUTPUT_JSON`：必须写入的 JSON 文件路径。
 - `EVENING_VIDEO_RECENT_RESOURCE_ROOT`：近期已发布内容目录，通常是 `/Users/fumingzhen/project/auto_publish/resources`。
+- `EVENING_VIDEO_SUBJECT_OVERRIDE`：可选；如果非空，必须把它作为 `video_subject`，并围绕这个主题生成脚本和搜索词。
+- `EVENING_VIDEO_SUBJECT_FILE`：可选；如果非空，读取该 UTF-8 文件内容作为指定主题，优先级高于 `EVENING_VIDEO_SUBJECT_OVERRIDE`。
 
 内容要求：
 
 1. 先读取 `EVENING_VIDEO_RECENT_RESOURCE_ROOT` 下最近 20 个资源目录中的 `metadata.json`、`body.txt`、`description.txt`，做语义去重。
-2. 主题必须是 2-30 个中文字符，适合头条短视频标题。
+2. 主题必须是 2-30 个中文字符，适合头条短视频标题；如果 `EVENING_VIDEO_SUBJECT_FILE` 或 `EVENING_VIDEO_SUBJECT_OVERRIDE` 非空，主题必须完全等于指定主题。
 3. 成片旁白脚本必须是中文，适合 45-75 秒视频朗读；不要写标题、分镜编号、旁白标签、Markdown。
 4. 脚本内容优先选择生活趣味观察、轻松历史小故事、轻产品推广软文之一；避免敏感政治、医疗金融承诺、低俗、夸张虚假。
 5. 画面素材会来自 Pexels/Pixabay 这类公开视频素材库，所以脚本必须能被具体视觉词表达；不要依赖难以搜到的抽象概念。

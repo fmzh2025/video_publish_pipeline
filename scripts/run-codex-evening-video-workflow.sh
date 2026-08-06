@@ -11,6 +11,7 @@ LOCK_DIR="$PIPELINE_DIR/.locks/evening-video-workflow.lock"
 REQUEST_ID="evening-video-$(date +%Y%m%d-%H%M%S)"
 RUN_DIR="$PIPELINE_DIR/workdir/codex-evening/$REQUEST_ID"
 OUTPUT_JSON="$RUN_DIR/dispatch-input.json"
+SUBJECT_FILE="$RUN_DIR/subject.txt"
 
 mkdir -p "$LOG_DIR" "$PIPELINE_DIR/.locks" "$RUN_DIR"
 
@@ -46,6 +47,19 @@ export EVENING_VIDEO_REQUEST_ID="$REQUEST_ID"
 export EVENING_VIDEO_OUTPUT_JSON="$OUTPUT_JSON"
 export EVENING_VIDEO_RECENT_RESOURCE_ROOT="${EVENING_VIDEO_RECENT_RESOURCE_ROOT:-/Users/fumingzhen/project/auto_publish/resources}"
 
+if [[ -n "${EVENING_VIDEO_SUBJECT_OVERRIDE_B64:-}" ]]; then
+  SUBJECT_FILE="$SUBJECT_FILE" SUBJECT_B64="$EVENING_VIDEO_SUBJECT_OVERRIDE_B64" node --input-type=module - <<'NODE'
+import fs from "node:fs";
+const subject = Buffer.from(process.env.SUBJECT_B64 || "", "base64").toString("utf8").trim();
+if (!subject) throw new Error("EVENING_VIDEO_SUBJECT_OVERRIDE_B64 decoded to an empty subject");
+fs.writeFileSync(process.env.SUBJECT_FILE, `${subject}\n`, "utf8");
+NODE
+  export EVENING_VIDEO_SUBJECT_FILE="$SUBJECT_FILE"
+elif [[ -n "${EVENING_VIDEO_SUBJECT_OVERRIDE:-}" ]]; then
+  printf '%s\n' "$EVENING_VIDEO_SUBJECT_OVERRIDE" > "$SUBJECT_FILE"
+  export EVENING_VIDEO_SUBJECT_FILE="$SUBJECT_FILE"
+fi
+
 cd "$PIPELINE_DIR"
 
 {
@@ -59,6 +73,31 @@ cd "$PIPELINE_DIR"
     echo "Codex did not write dispatch JSON: $OUTPUT_JSON" >&2
     exit 1
   fi
+
+  OUTPUT_JSON="$OUTPUT_JSON" SUBJECT_FILE="${EVENING_VIDEO_SUBJECT_FILE:-}" node --input-type=module - <<'NODE'
+import fs from "node:fs";
+
+const outputJson = process.env.OUTPUT_JSON;
+const data = JSON.parse(fs.readFileSync(outputJson, "utf8"));
+if (!data.request_id || !data.video_subject || !data.video_script) {
+  throw new Error("dispatch JSON must include request_id, video_subject, and video_script");
+}
+if (String(data.video_subject).includes("�")) {
+  throw new Error(`dispatch JSON subject has invalid replacement characters: ${data.video_subject}`);
+}
+if (process.env.SUBJECT_FILE) {
+  const expected = fs.readFileSync(process.env.SUBJECT_FILE, "utf8").trim();
+  if (data.video_subject !== expected) {
+    throw new Error(`dispatch JSON subject mismatch: expected ${expected}, got ${data.video_subject}`);
+  }
+}
+if (!Array.isArray(data.video_terms) || data.video_terms.length < 6 || data.video_terms.length > 8) {
+  throw new Error("dispatch JSON video_terms must be an array with 6-8 terms");
+}
+if (data.match_materials_to_script !== true) {
+  throw new Error("dispatch JSON match_materials_to_script must be true");
+}
+NODE
 
   npm run dispatch -- --input "$OUTPUT_JSON"
   echo "===== $(date '+%Y-%m-%d %H:%M:%S %Z') evening video dispatched request_id=$REQUEST_ID ====="
