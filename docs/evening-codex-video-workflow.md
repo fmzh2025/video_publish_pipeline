@@ -41,6 +41,30 @@ scripts/install-evening-video-launchd.sh
 7. 本地 callback worker 下载 artifact，解压 `final-1.mp4`。
 8. 本地 worker 调用 `auto_publish` 上传并发布到头条。
 
+## 主题风格
+
+晚间任务默认生成 MoneyPrinterTurbo/AI 内容创作相关主题，不再走泛生活观察或泛历史故事方向。
+
+主题优先围绕：
+
+- AI 工具使用
+- 普通人机会
+- 效率提升
+- 内容生产
+- 短视频创作
+- 职场变化
+- 自动化工作流
+
+标题需要有一点关注度和反差感，但不能承诺暴富或制造过度焦虑。推荐风格类似：
+
+```text
+不会用AI的人正在掉队
+普通人也能用AI做视频
+AI正在偷走重复劳动
+会提问的人先赚到时间
+短视频创作正在变简单
+```
+
 ## Callback 常驻服务
 
 当前本地 callback 服务监听：
